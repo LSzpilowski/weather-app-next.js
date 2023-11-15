@@ -57,8 +57,8 @@ setWeatherData({
 
 }
 
- if (weatherData.ready) {
-   return (
+if (weatherData.ready) {
+  return (
       <div className="weather-container">
         <div>
     <div className="deliverCity">
