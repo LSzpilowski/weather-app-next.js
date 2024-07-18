@@ -1,10 +1,8 @@
-import './App.css';
-import Weather from './Weather';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import Weather from './components/Weather';
 
 function App() {
   return (
-    <div className="container">
+    <div className='h-screen flex flex-col justify-center items-center bg-[#292929]'>
 <Weather />
     </div>
   );
