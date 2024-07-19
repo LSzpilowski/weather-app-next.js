@@ -1,6 +1,14 @@
 import React from "react";
 
-export default function FormattedDate({ date, dayOnly = false }) {
+interface IFormattedDateProps {
+  date: Date;
+  dayOnly: boolean;
+}
+
+export default function FormattedDate({
+  date,
+  dayOnly = false,
+}: IFormattedDateProps) {
   let days = [
     "Sunday",
     "Monday",
@@ -16,15 +24,9 @@ export default function FormattedDate({ date, dayOnly = false }) {
     return <div>{dayCut}</div>;
   }
 
-  let dayFull = days[date.getDay()];
-  let hours = date.getHours();
-  if (hours < 10) {
-    hours = `0${hours}`;
-  }
-  let minutes = date.getMinutes();
-  if (minutes < 10) {
-    minutes = `0${minutes}`;
-  }
+  const dayFull = days[date.getDay()];
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
 
   return (
     <div>

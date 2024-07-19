@@ -1,15 +1,56 @@
+"use client"
+
 import React, { useState } from "react";
 import axios from "axios";
 import DisplayWeather from "./DisplayWeather";
 
-export default function Weather() {
-  let [city, setCity] = useState("");
+export interface IWeatherData {
+  ready: boolean;
+  city: string;
+  temperature: number;
+  icon0: string;
+  description: string;
+  humidity: number;
+  wind: number;
+  date: Date;
+  [key: string]: any;
+}
 
-  function updateCity(event) {
+interface IDisplayDataResponse {
+  data: {
+    city: string;
+    daily: {
+      time: number;
+      temperature: {
+        day: number;
+        minimum: number;
+        maximum: number;
+        humidity: number;
+      };
+      condition: {
+        icon_url: string;
+        description: string;
+      };
+      wind: {
+        speed: number;
+      };
+    }[];
+  };
+}
+
+interface ICurrentLocationResponse {
+  [key: string]: any;
+}
+
+function Weather() {
+  const [city, setCity] = useState("");
+  const [weatherData, setWeatherData] = useState<Partial<IWeatherData>>({ ready: false });
+
+  function updateCity(event: React.ChangeEvent<HTMLInputElement>) {
     setCity(event.target.value);
-  }
+  };
 
-  function searchCity(event) {
+ function searchCity (event: React.FormEvent<HTMLFormElement>)  {
     event.preventDefault();
 
     let apiKey = `40fe6b5at4b35a738783f3e891e2281o`;
@@ -17,19 +58,16 @@ export default function Weather() {
 
     fetch(apiUrl)
       .then((response) => response.json())
-      .then((data1) => {
-        console.log(data1);
-      })
       .catch((error) => console.log(error));
 
     axios.get(apiUrl).then(displayData);
   }
 
-  const [weatherData, setWeatherData] = useState({ ready: false });
 
-  function displayData(response) {
+
+  function displayData(response: IDisplayDataResponse) {
     const daily = response.data.daily;
-    let weatherData = {
+    const weatherData: IWeatherData = {
       ready: true,
       city: response.data.city,
       temperature: Math.round(daily[0].temperature.day),
@@ -39,6 +77,7 @@ export default function Weather() {
       wind: Math.round(daily[0].wind.speed),
       date: new Date(daily[0].time * 1000),
     };
+
     daily.slice(1, 6).forEach((day, index) => {
       weatherData[`date${index + 1}`] = new Date(day.time * 1000);
       weatherData[`temp${index + 1}min`] = Math.round(day.temperature.minimum);
@@ -49,18 +88,13 @@ export default function Weather() {
     setWeatherData(weatherData);
   }
 
-  function currentLocation(response) {
-    console.log(response.date1);
+  function currentLocation(response: ICurrentLocationResponse) {
     let cityName = response[0].name;
     let apiKey = `40fe6b5at4b35a738783f3e891e2281o`;
-    console.log(cityName);
     let apiUrl = `https://api.shecodes.io/weather/v1/forecast?query=${cityName}&key=${apiKey}&units=metric`;
 
     fetch(apiUrl)
       .then((response) => response.json())
-      .then((data1) => {
-        console.log(data1);
-      })
       .catch((error) => console.log(error));
 
     axios.get(apiUrl).then(displayData);
@@ -70,7 +104,7 @@ export default function Weather() {
     navigator.geolocation.getCurrentPosition(showPosition);
   }
 
-  function showPosition(position) {
+  function showPosition(position: GeolocationPosition) {
     let apiKey = `a2fda9cdff27d3e5c19188e4f4fe1069`;
     let lat = position.coords.latitude;
     let lon = position.coords.longitude;
@@ -88,7 +122,7 @@ export default function Weather() {
         searchCity={searchCity}
         updateCity={updateCity}
         showLocation={showLocation}
-        weatherData={weatherData}
+        weatherData={weatherData as IWeatherData}
       />
     );
   } else {
@@ -100,3 +134,5 @@ export default function Weather() {
     return <div className="loading text-center text-5xl my-40">Loading...</div>;
   }
 }
+
+export default Weather;
