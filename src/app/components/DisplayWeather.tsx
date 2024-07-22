@@ -26,6 +26,10 @@ function DisplayWeather({
 }: IDisplayWeather) {
   const forecasts = [1, 2, 3, 4, 5];
 
+if (!weatherData.ready) {
+  return <div>Loading...</div>
+}
+
   return (
     <div className="w-11/12 md:w-3/5 shadow-lg rounded-lg p-5 md:p-10 bg-[#000000] text-slate-100">
       <div className="flex flex-col items-center justify-between gap-10 w-full">
@@ -92,11 +96,11 @@ function DisplayWeather({
                       alt={`Forecast no.${forecast}`}
                     ></img>
                   </li>
-                  <li>
-                    <div className="">{weatherData[`temp${forecast}min`]}°</div>{" "}
+                  <li className="flex flex-row justify-center gap-1">
                     <div className=" font-bold">
                       {weatherData[`temp${forecast}max`]}°
                     </div>
+                    <div>{weatherData[`temp${forecast}min`]}°</div>{" "}
                   </li>
                 </ul>
               </div>
