@@ -1,111 +1,212 @@
+"use client";
+
 import React from "react";
-import FormattedDate from "./FormattedDate";
+import SearchForm from "./SearchForm";
+import ErrorMessage from "./ErrorMessage";
+import CurrentWeather from "./CurrentWeather";
+import WeatherDetailCard from "./WeatherDetailCard";
+import ForecastCard from "./ForecastCard";
+import PinnedCityCard from "./PinnedCityCard";
+import { IWeatherData } from "../hooks/useWeather";
 
 interface IDisplayWeather {
   searchCity: (event: React.FormEvent<HTMLFormElement>) => void;
   updateCity: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  clearCity: () => void;
   showLocation: () => void;
-  weatherData: {
-    ready: boolean;
-    city: string;
-    temperature: number;
-    icon0: string;
-    description: string;
-    humidity: number;
-    wind: number;
-    date: Date;
-    [key: string]: any;
-  };
+  cityInput: string;
+  weatherData: IWeatherData;
+  error: string | null;
+  isSearching: boolean;
+  isGeolocating: boolean;
+  clickedDayIndex: number | null;
+  setClickedDayIndex: (index: number | null) => void;
+  clearError: () => void;
+  pinnedCities: string[];
+  pinCity: (city: string) => void;
+  unpinCity: (city: string) => void;
+  isPinned: (city: string) => boolean;
+  maxPins: number;
+  onSelectPinnedCity: (city: string) => void;
 }
 
 function DisplayWeather({
   searchCity,
   updateCity,
+  clearCity,
   showLocation,
+  cityInput,
   weatherData,
+  error,
+  isSearching,
+  isGeolocating,
+  clickedDayIndex,
+  setClickedDayIndex,
+  clearError,
+  pinnedCities,
+  pinCity,
+  unpinCity,
+  isPinned,
+  maxPins,
+  onSelectPinnedCity,
 }: IDisplayWeather) {
-  const forecasts = [1, 2, 3, 4, 5];
+  const selectedDay =
+    clickedDayIndex !== null ? weatherData.daily[clickedDayIndex] : null;
 
-if (!weatherData.ready) {
-  return <div>Loading...</div>
-}
+  const currentData = selectedDay
+    ? {
+        temperature: Math.round((selectedDay.tempMax + selectedDay.tempMin) / 2),
+        tempMin: selectedDay.tempMin,
+        tempMax: selectedDay.tempMax,
+        icon: selectedDay.icon,
+        description: selectedDay.description,
+        humidity: selectedDay.humidity,
+        wind: selectedDay.wind,
+        date: selectedDay.date,
+      }
+    : {
+        temperature: weatherData.temperature,
+        tempMin: weatherData.tempMin,
+        tempMax: weatherData.tempMax,
+        icon: weatherData.icon,
+        description: weatherData.description,
+        humidity: weatherData.humidity,
+        wind: weatherData.wind,
+        date: weatherData.date,
+      };
+
+  const MOCK_CITY = "__mock__";
+  const showMock = pinnedCities.length === 0;
+  const displayedPins = showMock ? [MOCK_CITY] : pinnedCities;
 
   return (
-    <div className="w-11/12 md:w-3/5 shadow-lg rounded-lg p-5 md:p-10 bg-[#000000] text-slate-100">
-      <div className="flex flex-col items-center justify-between gap-10 w-full">
-        <form
-          className="mt-0 max-h-9 w-full flex flex-row justify-center items-center"
-          onSubmit={searchCity}
-        >
-          <input
-            type="text"
-            placeholder="Search city"
-            autoComplete="off"
-            onChange={updateCity}
-            className="rounded border-none h-8 md:h-9 w-2/3 md:w-1/3 p-1 mr-1 bg-[#292929] text-white hover:bg-[#444242]"
+    <div className="flex-1 flex flex-col w-full md:overflow-hidden">
+      <div className="flex-1 flex flex-col bg-white/5 backdrop-blur-xl shadow-2xl border-y-0 md:border border-white/10 md:overflow-hidden min-h-screen pt-24">
+      <div className="fixed top-0 z-100 left-0 right-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 p-3 md:p-4 border-b border-white/10">
+          <SearchForm
+            searchCity={searchCity}
+            updateCity={updateCity}
+            clearCity={clearCity}
+            showLocation={showLocation}
+            cityInput={cityInput}
+            isSearching={isSearching}
+            isGeolocating={isGeolocating}
+            cityName={weatherData.city}
+            isPinned={isPinned(weatherData.city)}
+            pinDisabled={!isPinned(weatherData.city) && pinnedCities.length >= maxPins}
+            maxPins={maxPins}
+            onPinToggle={() =>
+              isPinned(weatherData.city)
+                ? unpinCity(weatherData.city)
+                : pinCity(weatherData.city)
+            }
           />
-          <input
-            type="submit"
-            className="border rounded-md border-black py-1.5 md:py-1 px-1 md:px-2 m-1 hover:cursor-pointer bg-[#292929] text-sm md:text-lg md:font-bold hover:bg-[#444242]"
-            value="Search"
-          />
-          <button
-            className="border rounded-md border-black py-1.5 md:py-1 px-1 md:px-2 m-1 hover:cursor-pointer bg-[#292929] text-sm md:text-lg md:font-bold hover:bg-[#444242]"
-            onClick={showLocation}
-          >
-            Current
-          </button>
-        </form>
-        <div className="flex flex-col md:flex-row justify-around w-full items-center">
-          <div className="text-3xl flex flex-row justify-evenly items-center w-full md:w-2/3 lg:text-5xl font-semibold p-0 m-0">
-            {weatherData.city}
-            <div className="flex flex-row items-center ">
-              <img src={weatherData.icon0} alt="Alt"></img>
-              <div className="md:text-2xl lg:text-6xl font-light flex flex-row">
-                {weatherData.temperature}
-                <div className="text-xl">°C</div>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-row md:flex-col justify-evenly items-center w-full md:w-1/3">
-            <div className="md:text-sm lg:text-lg">
-              <FormattedDate date={weatherData.date} dayOnly={false} />
-              <div className="capitalize">{weatherData.description}</div>
-            </div>
-            <div className="md:text-sm lg:text-lg">
-              <div className="">Humidity: {weatherData.humidity}%</div>
-              <div className="">Wind: {weatherData.wind}km/h</div>
-            </div>
-          </div>
+          {error && <ErrorMessage error={error} onClear={clearError} />}
         </div>
-        <div className="flex flex-row justify-between w-full">
-          {forecasts.map((forecast, index) => {
-            return (
-              <div key={index} className="flex flex-row w-full justify-evenly ">
-                <ul className=" text-center list-none">
-                  <li>
-                    <FormattedDate
-                      date={weatherData[`date${forecast}`]}
-                      dayOnly={true}
-                    />
-                  </li>
-                  <li>
-                    <img
-                      className=""
-                      src={weatherData[`icon${forecast}`]}
-                      alt={`Forecast no.${forecast}`}
-                    ></img>
-                  </li>
-                  <li className="flex flex-row justify-center gap-1">
-                    <div className=" font-bold">
-                      {weatherData[`temp${forecast}max`]}°
-                    </div>
-                    <div>{weatherData[`temp${forecast}min`]}°</div>{" "}
-                  </li>
-                </ul>
-              </div>
-            );
-          })}
+        <div className="flex-1 flex flex-col p-3 md:p-4 overflow-hidden">
+          <div className="grid lg:grid-cols-2 gap-10 mb-4 md:mb-10">
+            <CurrentWeather
+              city={weatherData.city}
+              date={currentData.date}
+              temperature={currentData.temperature}
+              icon={currentData.icon}
+              description={currentData.description}
+              isForecastDay={clickedDayIndex !== null}
+            />
+
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <WeatherDetailCard
+                iconType="humidity"
+                label="Humidity"
+                value={`${currentData.humidity}%`}
+                bgColor="bg-blue-500/20"
+              />
+              <WeatherDetailCard
+                iconType="wind"
+                label="Wind"
+                value={`${currentData.wind} km/h`}
+                bgColor="bg-emerald-500/20"
+              />
+              <WeatherDetailCard
+                iconType="tempMin"
+                label="Min Temp"
+                value={`${currentData.tempMin}°`}
+                bgColor="bg-cyan-500/20"
+              />
+              <WeatherDetailCard
+                iconType="tempMax"
+                label="Max Temp"
+                value={`${currentData.tempMax}°`}
+                bgColor="bg-orange-500/20"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0 flex flex-col gap-4 md:gap-10">
+          <div>
+            <h2 className="text-sm md:text-base font-bold text-white mb-2 flex items-center gap-1.5">
+              <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              5-Day Forecast
+            </h2>
+            <div className="md:grid md:grid-cols-5 md:gap-3 lg:gap-4 flex md:flex-none overflow-x-auto gap-3 pb-4 md:pb-0 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800/50 -mx-4 px-4 md:mx-0 md:px-0">
+              {weatherData.daily.map((forecast, idx) => {
+                const isClicked = clickedDayIndex === idx;
+                const isDimmed = clickedDayIndex !== null && clickedDayIndex !== idx;
+
+                return (
+                  <ForecastCard
+                    key={idx}
+                    date={forecast.date}
+                    icon={forecast.icon}
+                    description={forecast.description}
+                    tempMax={forecast.tempMax}
+                    tempMin={forecast.tempMin}
+                    index={idx}
+                    isClicked={isClicked}
+                    isDimmed={isDimmed}
+                    onClick={() => {
+                      setClickedDayIndex(clickedDayIndex === idx ? null : idx);
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex-1 min-h-0 bg-white/3 border border-white/8 rounded-xl px-3 py-3 flex flex-col">
+            <div className="flex items-center gap-1.5 mb-2">
+              <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+              <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                Pinned cities
+                {!showMock && (
+                  <span className="ml-1.5 text-xs font-normal text-slate-500 normal-case tracking-normal">
+                    {pinnedCities.length}/{maxPins}
+                  </span>
+                )}
+              </h2>
+            </div>
+            <div className="flex-1 min-h-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 content-start">
+              {displayedPins.map((city) => (
+                <PinnedCityCard
+                  key={city}
+                  city={city}
+                  isMock={city === MOCK_CITY}
+                  onSelect={onSelectPinnedCity}
+                  onUnpin={unpinCity}
+                  isActive={!showMock && weatherData.city.toLowerCase() === city.toLowerCase()}
+                />
+              ))}
+            </div>
+          </div>
+          </div>
         </div>
       </div>
     </div>
